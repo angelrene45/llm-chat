@@ -1,2 +1,7 @@
 .devcontainer
-secrets.toml
+.chroma/
+.github/
+.vscode/
+.streamlit/
+chroma_db/
+database_info.txt
