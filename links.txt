@@ -1,0 +1,7 @@
+# DATA EXPLORATION WITH LLM-POWERED CHATBOTS
+https://developers.snowflake.com/demos/data-exploration-llm-chatbot/
+https://quickstarts.snowflake.com/guide/frosty_llm_chatbot_on_streamlit_snowflake/index.html
+
+# Important articles
+https://blog.langchain.dev/llms-and-sql/
+https://towardsdatascience.com/4-ways-of-question-answering-in-langchain-188c6707cc5a

@@ -23,11 +23,9 @@ if "messages" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state["history"] = []
 
-
 # Prompt for user input and save (user messages coming here)
 if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
-
 
 # display the existing chat messages
 for message in st.session_state.messages:
@@ -56,6 +54,7 @@ def append_message(content, role="assistant"):
 
     if not isinstance(content, pd.DataFrame):
         append_chat_history(st.session_state.messages[-2]["content"], content)
+        # pass
 
 
 def handle_sql_exception(query, conn, e, retries=2):
@@ -98,7 +97,6 @@ if st.session_state.messages[-1]["role"] != "assistant":
             {"question": content, "chat_history": st.session_state["history"]}
         )["answer"]
         # response = "```sql\nSELECT error\n```"
-        # response = "que pASAA"
         st.markdown(response)
 
         # for delta in chain:
