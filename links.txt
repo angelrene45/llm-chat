@@ -1,7 +1,14 @@
-# DATA EXPLORATION WITH LLM-POWERED CHATBOTS
+# Build an LLM Chatbot in Streamlit on your Snowflake Data
+# video 
+https://www.youtube.com/watch?v=3WH1DHBf2WQ&ab_channel=SnowflakeDevelopers
+# main link
 https://developers.snowflake.com/demos/data-exploration-llm-chatbot/
+# Instructions
 https://quickstarts.snowflake.com/guide/frosty_llm_chatbot_on_streamlit_snowflake/index.html
+# source code 
+https://github.com/Snowflake-Labs/sfguide-frosty-llm-chatbot-on-streamlit-snowflake
 
-# Important articles
+
+# Important articles about langchain
 https://blog.langchain.dev/llms-and-sql/
 https://towardsdatascience.com/4-ways-of-question-answering-in-langchain-188c6707cc5a
