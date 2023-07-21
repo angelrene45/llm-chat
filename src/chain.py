@@ -1,7 +1,6 @@
 import streamlit as st
 
 from langchain.prompts.prompt import PromptTemplate
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import ConversationalRetrievalChain, LLMChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chat_models import ChatOpenAI

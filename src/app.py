@@ -146,25 +146,26 @@ if st.session_state["text"]:
     with st.spinner('PandasAI is generating an answer, please wait...'):
         # pandas can provide plot, text or dataframe as answer
         answer = pandas_ai.run(st.session_state["df"], st.session_state["text"])
-
-        if isinstance(answer, pd.DataFrame):
-            # dataframe anwser
-            st.dataframe(answer)
-            append_message(answer, role="assistant", skip_history=True)
-        elif answer:
-            # text answer
-            st.markdown(answer)
-            append_message(answer, role="assistant", skip_history=True)
         
+        # get current plots from matplotlib
         fig_number = plt.get_fignums()
-        # plot answer
         if fig_number:
+            # plot answer
             # save image in memory
             buffer = io.BytesIO()
             plt.savefig(buffer, format='png')
             buffer.seek(0)
             st.image(buffer)
             append_message(buffer, role="assistant", skip_history=True)
+        elif isinstance(answer, pd.DataFrame):
+            # dataframe anwser
+            st.dataframe(answer)
+            append_message(answer, role="assistant", skip_history=True)
+        else:
+            # text answer
+            st.markdown(answer)
+            append_message(answer, role="assistant", skip_history=True)
+        
 
     # clear text and df 
     st.session_state["text"] = ""
