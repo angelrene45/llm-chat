@@ -7,5 +7,8 @@ __pycache__/
 .chroma/
 .github/
 .vscode/
+cache/
 chroma_db/
 database_info.txt
+plot.png
+pandasai.log

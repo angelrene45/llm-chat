@@ -1,5 +1,7 @@
 ## Instalation
 Install miniconda or install python 3.10 intepreter
+Install Git
+Install vscode with python and jupyter extensions 
 
 ## Miniconda 
 ```cmd

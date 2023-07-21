@@ -1,14 +1,24 @@
 import re
+import types
+import io 
 
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 from snowflake.snowpark.exceptions import SnowparkSQLException
+from pandasai.middlewares.streamlit import StreamlitMiddleware
+from pandasai.llm.openai import OpenAI
+from pandasai import PandasAI
+from matplotlib import pyplot as plt
 
 from chain import load_chain, first_instruction
+from pandasaiMiddleware import HandleMathPlotChartsMiddleware
 
+llm = OpenAI()
+pandas_ai = PandasAI(llm, middlewares=[HandleMathPlotChartsMiddleware()])
 chain = load_chain()
 
-st.title("☃️ Frosty")
+st.title("☃️ Snowflake AI")
 
 # Initialize the chat messages history
 if "messages" not in st.session_state:
@@ -23,6 +33,12 @@ if "messages" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state["history"] = []
 
+if "text" not in st.session_state:
+    st.session_state["text"] = ""
+
+if "df" not in st.session_state:
+    st.session_state["df"] = None
+
 # Prompt for user input and save (user messages coming here)
 if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -35,6 +51,8 @@ for message in st.session_state.messages:
         # check type of content
         if isinstance(content, pd.DataFrame):
             st.dataframe(content)
+        elif isinstance(content, io.BytesIO):
+            st.image(content)
         else:
             st.markdown(content)
 
@@ -48,12 +66,12 @@ def get_sql(text):
     return sql_match.group(1) if sql_match else None
 
 
-def append_message(content, role="assistant"):
+def append_message(content, role="assistant", skip_history=False):
     message = {"role": role, "content": content}
     st.session_state.messages.append(message)
 
     if not isinstance(content, pd.DataFrame):
-        append_chat_history(st.session_state.messages[-2]["content"], content)
+        if not skip_history: append_chat_history(st.session_state.messages[-2]["content"], content)
         # pass
 
 
@@ -88,31 +106,19 @@ def execute_sql(query, conn, retries=2):
     except SnowparkSQLException as e:
         return handle_sql_exception(query, conn, e, retries)
 
-
 # If last message is not from assistant, we need to generate a new response
 if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
-        content = st.session_state.messages[-1]["content"]
-        response = chain(
-            {"question": content, "chat_history": st.session_state["history"]}
-        )["answer"]
-        # response = "```sql\nSELECT error\n```"
-        st.markdown(response)
 
-        # for delta in chain:
-        #     print("*"*100)
-        #     print(delta)
-        #     response += delta[1].get("answer", "")
+        with st.spinner('Thinking...'):
+            content = st.session_state.messages[-1]["content"]
+            response = chain(
+                {"question": content, "chat_history": st.session_state["history"]}
+            )["answer"]
+            # response = "```sql\nSELECT country_region, SUM(cases) AS total_cases, SUM(deaths) AS total_deaths FROM ecdc_global GROUP BY country_region;\n```"
+            st.markdown(response)
+            append_message(response)
 
-        # # Parse the response for a SQL query and execute if available
-        # sql_match = re.search(r"```sql\n(.*)\n```", response, re.DOTALL)
-        # if sql_match:
-        #     sql = sql_match.group(1)
-        #     conn = st.experimental_connection("snowpark")
-        #     message["results"] = conn.query(sql)
-        #     st.dataframe(message["results"])
-
-        append_message(response)
         # check if reponse containt sql
         if get_sql(response):
             # execute sql query to snowflake
@@ -122,3 +128,44 @@ if st.session_state.messages[-1]["role"] != "assistant":
                 # append message from AI only to UI but not include dataframe in chat history and avoid send dataframes to openAI
                 st.dataframe(df)
                 append_message(df)
+                st.session_state["df"] = df
+
+                # analyze dataframe
+                with st.form("my_form"):
+                    st.write('Question Data')
+                    text = st.text_input(label="Enter your prompt", key="text")
+                    submit_form = st.form_submit_button(label="Ask", help="Click to ask!")
+
+# 
+if st.session_state["text"]:
+    # show question user from dataframe PandasAI
+    st.markdown(st.session_state["text"])
+    append_message(st.session_state["text"], role="user", skip_history=True)
+
+    # ask pandasai
+    with st.spinner('PandasAI is generating an answer, please wait...'):
+        # pandas can provide plot, text or dataframe as answer
+        answer = pandas_ai.run(st.session_state["df"], st.session_state["text"])
+
+        if isinstance(answer, pd.DataFrame):
+            # dataframe anwser
+            st.dataframe(answer)
+            append_message(answer, role="assistant", skip_history=True)
+        elif answer:
+            # text answer
+            st.markdown(answer)
+            append_message(answer, role="assistant", skip_history=True)
+        
+        fig_number = plt.get_fignums()
+        # plot answer
+        if fig_number:
+            # save image in memory
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png')
+            buffer.seek(0)
+            st.image(buffer)
+            append_message(buffer, role="assistant", skip_history=True)
+
+    # clear text and df 
+    st.session_state["text"] = ""
+    st.session_state["df"] = None
